@@ -5,6 +5,7 @@ import 'source-map-support/register'
 export { Bootstrap } from './src/Bootstrap'
 export { Application } from './src/Application'
 export { Route } from './src/Route'
+export { Env, loadEnv } from 'eznv'
 
 // Registry.BootstrapOptions.addProperty('cwd', {
 //   type: 'string',
