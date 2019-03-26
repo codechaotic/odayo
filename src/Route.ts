@@ -1,12 +1,10 @@
-import { Container } from 'diminish'
-
 import { Types } from './Types'
 import { Loader } from './Loader'
 
 export interface RouteOptions<Modules> {
   path: string
   method: Types.RouteMethod
-  load: (this: RouteHelper<Modules>, modules: Types.Inferred<Modules>) => void
+  load: (this: RouteHelper<Modules>, modules: Modules) => void
 }
 
 export interface RouteResult {
@@ -35,23 +33,17 @@ export class RouteContext <Modules> {
     await Promise.all(this.promises)
     return this.result
   }
-
-  // async addLoader (loader: (context: RouteContext<Modules>) => Promise<void> | void) {
-  //   const promise = Promise.resolve(loader(this))
-  //   this.promises.push(promise)
-  // }
 }
 
-export function Route<Modules> (options: RouteOptions<Modules>) {
-  const routeContext = new RouteContext<Modules>(options)
+export function Route<Modules = any> (options: RouteOptions<Modules>) {
+  Loader.loadRoute(async application => {
+    const route = new RouteContext<Modules>(options)
+    const helper = new RouteHelper<Modules>(route)
 
-  Loader.loadRoute(async applicationContext => {
-    const helper = new RouteHelper<Modules>(routeContext)
-
-    const returnValue = applicationContext.container.invoke(helper, options.load)
+    const returnValue = application.container.invoke(helper, options.load)
     await Promise.resolve(returnValue)
 
-    return routeContext.getResult()
+    return route.getResult()
   })
 }
 

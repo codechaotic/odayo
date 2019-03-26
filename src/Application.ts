@@ -5,14 +5,13 @@ import { Container } from 'diminish'
 
 import { Types } from './Types'
 import { Loader } from './Loader'
-import { isLogger, Logger } from './Logger'
-import { Route, RouteOptions, RouteHelper, RouteResult } from './Route'
+import { Route, RouteOptions, RouteResult } from './Route'
 
 export interface ApplicationOptions<Modules> {
   cwd?: string
   modules?: string
   routes?: string
-  load?: (this: ApplicationHelper<Modules>, modules: Types.Inferred<Modules>) => void
+  load?: (this: ApplicationHelper<Modules>, modules: Modules) => void
 }
 
 export interface ApplicationResult {
@@ -30,10 +29,14 @@ export class ApplicationContext <Modules> {
   constructor (options: ApplicationOptions<Modules>) {
     this.options = {} as ApplicationOptions<Modules>
     this.options.load = options.load
-    const odayoRoot = path.resolve(__dirname, '')
+
+    const root = path.resolve(__dirname, '..')
     const caller = stack.get().find(frame => {
-      const prefix = frame.getFileName().slice(0, odayoRoot.length)
-      return prefix !== odayoRoot
+      const filename = frame.getFileName()
+      if (filename !== null) {
+        const prefix = filename.slice(0, root.length)
+        return prefix !== root
+      }
     })
     this.options.cwd = path.resolve(options.cwd || path.dirname(caller.getFileName()))
     this.options.modules = path.resolve(this.options.cwd, options.modules || 'modules/**/*.js')
@@ -54,31 +57,20 @@ export class ApplicationContext <Modules> {
 }
 
 export function Application <Modules = any> (options: ApplicationOptions<Modules>) {
-  const applicationContext = new ApplicationContext<Modules>(options)
-
   Loader.loadApplication(async () => {
-    await applicationContext.container.import(applicationContext.options.modules)
+    const application = new ApplicationContext<Modules>(options)
+    const helper = new ApplicationHelper<Modules>(application)
 
-    if (!applicationContext.container.isRegistered('logger')) {
-      await applicationContext.container.literal('logger', new Logger())
-    }
+    await application.container.import(application.options.modules)
 
-    const logger = await applicationContext.container.resolve('logger')
+    helper.loadRoutes(application.options.routes)
 
-    if (!isLogger(logger)) {
-      throw new Error(`custom logger does not implement expected methods (debug, info, warn, error)`)
-    }
-    
-    const helper = new ApplicationHelper<Modules>(applicationContext)
-
-    helper.loadRoutes(applicationContext.options.routes)
-
-    if (applicationContext.options.load) {
-      const returnValue = applicationContext.container.invoke(helper, applicationContext.options.load)
+    if (application.options.load) {
+      const returnValue = application.container.invoke(helper, application.options.load)
       await Promise.resolve(returnValue)
     }
 
-    return applicationContext.getResult()
+    return application.getResult()
   })
 }
 
@@ -90,7 +82,7 @@ export class ApplicationHelper <Modules> {
   }
 
   query (name: string, options: any ) {
-    
+
   }
 
   use (middleware: Types.RouteMiddleware) {

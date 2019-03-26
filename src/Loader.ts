@@ -1,8 +1,6 @@
-import { Container } from 'diminish'
-
 import { BootstrapContext } from './Bootstrap'
 import { ApplicationContext, ApplicationResult } from './Application'
-import { RouteContext, RouteResult } from './Route'
+import { RouteResult } from './Route'
 
 export namespace Loader {
   let applicationContext: ApplicationContext<any>

@@ -4,15 +4,27 @@ import * as glob from 'glob'
 import { Loader } from './Loader'
 import { ApplicationResult } from './Application'
 
+export interface BootstrapOptions {
+  source: string
+  action: 'run'
+}
+
 export interface BootstrapResult {
   applications: ApplicationResult[]
 }
 
 export class BootstrapContext {
-  promises = [] as Promise<void>[]
-  result = {
+  private promises = [] as Promise<void>[]
+  private result = {
     applications: []
   } as BootstrapResult
+  public options: BootstrapOptions
+
+  constructor (options: BootstrapOptions) {
+    this.options = {} as BootstrapOptions
+    this.options.source = path.resolve(process.cwd(), options.source)
+    this.options.action = options.action
+  }
 
   async getResult () {
     await Promise.all(this.promises)
@@ -27,13 +39,12 @@ export class BootstrapContext {
   }
 }
 
-export function Bootstrap (appGlob) {
-  const bootstrapContext = new BootstrapContext()
+export function Bootstrap (options: BootstrapOptions) {
+  const context = new BootstrapContext(options)
 
-  Loader.bindBootstrapContext(bootstrapContext, async () => {
-    const src = path.resolve(process.cwd(), appGlob)
+  Loader.bindBootstrapContext(context, async () => {
     const files = await new Promise<Array<string>>((resolve, reject) => {
-      glob(src, (error, files) => {
+      glob(context.options.source, (error, files) => {
         error ? reject(error) : resolve(files)
       })
     })
@@ -43,7 +54,7 @@ export function Bootstrap (appGlob) {
       await import(file)
     }
 
-    const result = await bootstrapContext.getResult()
+    const result = await context.getResult()
 
     console.log(JSON.stringify(result, null, 2))
   })
