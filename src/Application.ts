@@ -50,8 +50,8 @@ export class ApplicationContext <Modules> {
 
   async addRouteLoader (loader: (context: ApplicationContext<Modules>) => Promise<RouteResult> | RouteResult) {
     this.promises.push((async () => {
-      const application = await Promise.resolve(loader(this))
-      this.result.routes.push(application)
+      const route = await Promise.resolve(loader(this))
+      this.result.routes.push(route)
     })())
   }
 }

@@ -14,19 +14,17 @@ export interface RouteResult {
 }
 
 export class RouteContext <Modules> {
-  result = {
-    middleware: []
-  } as RouteResult
-  options: RouteOptions<Modules>
+  result = {} as RouteResult
+  options = {} as RouteOptions<Modules>
   promises = [] as Promise<void>[]
 
   constructor (options: RouteOptions<Modules>) {
-    this.options = {} as RouteOptions<Modules>
     this.options.load = options.load
     this.options.path = options.path
     this.options.method = options.method
     this.result.path = options.path
     this.result.method = options.method
+    this.result.middleware = []
   }
 
   async getResult () {
@@ -40,21 +38,16 @@ export function Route<Modules = any> (options: RouteOptions<Modules>) {
     const route = new RouteContext<Modules>(options)
     const helper = new RouteHelper<Modules>(route)
 
-    const returnValue = application.container.invoke(helper, options.load)
-    await Promise.resolve(returnValue)
+    await application.container.invoke(helper, options.load)
 
     return route.getResult()
   })
 }
 
 export class RouteHelper <Modules> {
-  constructor(private context: RouteContext<Modules>) {}
+  constructor(private route: RouteContext<Modules>) {}
 
   use (middleware: Types.RouteMiddleware) {
-    if (this.context.result.middleware === undefined) {
-      this.context.result.middleware = []
-    }
-
-    this.context.result.middleware.push(middleware)
+    this.route.result.middleware.push(middleware)
   }
 }
