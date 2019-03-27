@@ -3,10 +3,11 @@ import * as glob from 'glob'
 
 import { Loader } from './Loader'
 import { ApplicationResult } from './Application'
+import { Build } from './Build'
 
 export interface BootstrapOptions {
   source: string
-  action: 'run'
+  build: 'run' | 'docs'
 }
 
 export interface BootstrapResult {
@@ -20,7 +21,7 @@ export class BootstrapContext {
 
   constructor (options: BootstrapOptions) {
     this.options.source = path.resolve(process.cwd(), options.source)
-    this.options.action = options.action
+    this.options.build = options.build
     this.result.applications = []
   }
 
@@ -54,6 +55,6 @@ export function Bootstrap (options: BootstrapOptions) {
 
     const result = await context.getResult()
 
-    console.log(JSON.stringify(result, null, 2))
+    await Build(result, options.build)
   })
 }
