@@ -1,11 +1,11 @@
 import * as path from 'path'
 import * as glob from 'glob'
-import * as stack from 'stack-trace'
 import { Container } from 'diminish'
 
 import { Types } from './Types'
 import { Loader } from './Loader'
 import { Route, RouteOptions, RouteResult } from './Route'
+import { caller } from './lib/caller'
 
 export interface ApplicationOptions<Modules> {
   cwd?: string
@@ -19,28 +19,17 @@ export interface ApplicationResult {
 }
 
 export class ApplicationContext <Modules> {
-  container = new Container()
-  result = {
-    routes: []
-  } as ApplicationResult
+  result = {} as ApplicationResult
+  options = {} as ApplicationOptions<Modules>
   promises = [] as Promise<void>[]
-  options: ApplicationOptions<Modules>
+  container = new Container()
 
   constructor (options: ApplicationOptions<Modules>) {
-    this.options = {} as ApplicationOptions<Modules>
     this.options.load = options.load
-
-    const root = path.resolve(__dirname, '..')
-    const caller = stack.get().find(frame => {
-      const filename = frame.getFileName()
-      if (filename !== null) {
-        const prefix = filename.slice(0, root.length)
-        return prefix !== root
-      }
-    })
-    this.options.cwd = path.resolve(options.cwd || path.dirname(caller.getFileName()))
+    this.options.cwd = path.resolve(options.cwd || caller())
     this.options.modules = path.resolve(this.options.cwd, options.modules || 'modules/**/*.js')
     this.options.routes = path.resolve(this.options.cwd, options.routes || 'routes/**/*.js')
+    this.result.routes = []
   }
 
   async getResult () {

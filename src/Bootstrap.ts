@@ -14,16 +14,14 @@ export interface BootstrapResult {
 }
 
 export class BootstrapContext {
-  private promises = [] as Promise<void>[]
-  private result = {
-    applications: []
-  } as BootstrapResult
-  public options: BootstrapOptions
+  result = {} as BootstrapResult
+  options = {} as BootstrapOptions
+  promises = [] as Promise<void>[]
 
   constructor (options: BootstrapOptions) {
-    this.options = {} as BootstrapOptions
     this.options.source = path.resolve(process.cwd(), options.source)
     this.options.action = options.action
+    this.result.applications = []
   }
 
   async getResult () {
