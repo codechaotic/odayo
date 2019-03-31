@@ -13,6 +13,7 @@ export namespace Loader {
     if (applicationPromise) await applicationPromise
     applicationContext = context
     applicationPromise = Promise.resolve(callback())
+    return applicationPromise
   }
 
   export function loadRoute <Modules = any> (loader: (context: ApplicationContext<Modules>) => Promise<RouteResult> | RouteResult) : void {
@@ -25,6 +26,7 @@ export namespace Loader {
     if (bootstrapPromise) await bootstrapPromise
     bootstrapContext = context
     bootstrapPromise = Promise.resolve(callback())
+    return bootstrapPromise
   }
 
   export function loadApplication (loader: (context: BootstrapContext) => Promise<ApplicationResult> | ApplicationResult) : void {
