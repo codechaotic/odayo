@@ -4,51 +4,13 @@ import { Container } from 'diminish'
 
 import { Types } from './Types'
 import { Loader } from './Loader'
-import { Route, RouteOptions, RouteResult } from './Route'
+import { Route } from './Route'
 import { caller } from './lib/caller'
 
-export interface ApplicationOptions<Modules> {
-  cwd?: string
-  modules?: string
-  routes?: string
-  load?: (this: ApplicationHelper<Modules>, modules: Modules) => void
-}
-
-export interface ApplicationResult {
-  routes: RouteResult[]
-}
-
-export class ApplicationContext <Modules> {
-  result = {} as ApplicationResult
-  options = {} as ApplicationOptions<Modules>
-  promises = [] as Promise<void>[]
-  container = new Container()
-
-  constructor (options: ApplicationOptions<Modules>) {
-    this.options.load = options.load
-    this.options.cwd = path.resolve(options.cwd || caller())
-    this.options.modules = path.resolve(this.options.cwd, options.modules || 'modules/**/*.js')
-    this.options.routes = path.resolve(this.options.cwd, options.routes || 'routes/**/*.js')
-    this.result.routes = []
-  }
-
-  async getResult () {
-    await Promise.all(this.promises)
-    return this.result
-  }
-
-  async addRouteLoader (loader: (context: ApplicationContext<Modules>) => Promise<RouteResult> | RouteResult) {
-    this.promises.push((async () => {
-      const route = await Promise.resolve(loader(this))
-      this.result.routes.push(route)
-    })())
-  }
-}
-
-export function Application <Modules = any> (options: ApplicationOptions<Modules>) {
+export function Application <Modules = any> (options: Types.ApplicationOptions<Modules>) {
   Loader.loadApplication(async () => {
     const application = new ApplicationContext<Modules>(options)
-    const helper = new ApplicationHelper<Modules>(application)
+    const helper = new ApplicationBuilder<Modules>(application)
 
     await application.container.import(application.options.modules)
 
@@ -63,22 +25,64 @@ export function Application <Modules = any> (options: ApplicationOptions<Modules
   })
 }
 
-export class ApplicationHelper <Modules> {
-  constructor(private context: ApplicationContext<Modules>) {}
+export class ApplicationContext <Modules> {
+  result = {} as Types.ApplicationResult
+  options = {} as Types.ApplicationOptions<Modules>
+  promises = [] as Promise<void>[]
+  container = new Container()
 
-  param (name: string, options: any ) {
-
+  constructor (options: Types.ApplicationOptions<Modules>) {
+    this.options.load = options.load
+    this.options.cwd = path.resolve(options.cwd || caller())
+    this.options.modules = path.resolve(this.options.cwd, options.modules || 'modules/**/*.js')
+    this.options.routes = path.resolve(this.options.cwd, options.routes || 'routes/**/*.js')
+    this.result.routes = []
+    this.result.middleware = []
+    this.result.query = []
+    this.result.param = []
   }
 
-  query (name: string, options: any ) {
+  async getResult () {
+    await Promise.all(this.promises)
+    return this.result
+  }
 
+  async addRouteLoader (loader: Types.RouteLoader<Modules>) {
+    this.promises.push((async () => {
+      const route = await Promise.resolve(loader(this))
+      this.result.routes.push(route)
+    })())
+  }
+
+  async addMiddleware (middleware: Types.RouteMiddleware) {
+    this.result.middleware.push(middleware)
+  }
+
+  async addQuery (query: Types.RouteQuery) {
+    this.result.query.push(query)
+  }
+
+  async addParam (param: Types.RouteParam) {
+    this.result.param.push(param)
+  }
+}
+
+export class ApplicationBuilder <Modules> {
+  constructor(private context: ApplicationContext<Modules>) {}
+
+  param (param: Types.RouteParam) {
+    this.context.addParam(param)
+  }
+
+  query (query: Types.RouteQuery) {
+    this.context.addQuery(query)
   }
 
   use (middleware: Types.RouteMiddleware) {
-
+    this.context.addMiddleware(middleware)
   }
 
-  route (options: RouteOptions<Modules>) {
+  route (options: Types.RouteOptions<Modules>) {
     Loader.bindApplicationContext(this.context, async () => {
       Route(options)
     })

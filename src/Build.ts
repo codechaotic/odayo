@@ -1,11 +1,11 @@
-import { BootstrapResult, BootstrapOptions } from './Bootstrap'
-import { Types } from './Types'
 import * as Koa from 'koa'
 import * as compose from 'koa-compose'
 import * as pathToRegexp from 'path-to-regexp'
 import * as http from 'http'
 
-export async function Build (result: BootstrapResult, build: BootstrapOptions['build']) {
+import { Types } from './Types'
+
+export async function Build (result: Types.BootstrapResult, build: Types.BootstrapOptions['build']) {
   switch (build) {
     case 'run': {
       for (const application of result.applications) {

@@ -1,6 +1,6 @@
 import { BootstrapContext } from './Bootstrap'
-import { ApplicationContext, ApplicationResult } from './Application'
-import { RouteResult } from './Route'
+import { ApplicationContext } from './Application'
+import { Types } from './Types'
 
 export namespace Loader {
   let applicationContext: ApplicationContext<any>
@@ -16,7 +16,7 @@ export namespace Loader {
     return applicationPromise
   }
 
-  export function loadRoute <Modules = any> (loader: (context: ApplicationContext<Modules>) => Promise<RouteResult> | RouteResult) : void {
+  export function loadRoute <Modules = any> (loader: Types.RouteLoader<Modules>) : void {
     if (applicationContext) {
       applicationContext.addRouteLoader(loader)
     } else throw new Error('Loader has no bound application context')
@@ -29,7 +29,7 @@ export namespace Loader {
     return bootstrapPromise
   }
 
-  export function loadApplication (loader: (context: BootstrapContext) => Promise<ApplicationResult> | ApplicationResult) : void {
+  export function loadApplication (loader: Types.ApplicationLoader) : void {
     if (bootstrapContext) {
       bootstrapContext.addApplicationLoader(loader)
     } else throw new Error('No execution context has been created')

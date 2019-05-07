@@ -7,12 +7,11 @@
     "target": "es6",
     "lib": ["es7"],
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "outDir": "dist"
   },
   "include": [
-    "index.ts",
-    "src/**/*.ts",
-    "lib/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules"

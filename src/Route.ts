@@ -1,24 +1,12 @@
 import { Types } from './Types'
 import { Loader } from './Loader'
 
-export interface RouteOptions<Modules> {
-  path: string
-  method: Types.RouteMethod
-  load: (this: RouteHelper<Modules>, modules: Modules) => void
-}
-
-export interface RouteResult {
-  path: string
-  method: Types.RouteMethod
-  middleware: Types.RouteMiddleware[]
-}
-
 export class RouteContext <Modules> {
-  result = {} as RouteResult
-  options = {} as RouteOptions<Modules>
+  result = {} as Types.RouteResult
+  options = {} as Types.RouteOptions<Modules>
   promises = [] as Promise<void>[]
 
-  constructor (options: RouteOptions<Modules>) {
+  constructor (options: Types.RouteOptions<Modules>) {
     this.options.load = options.load
     this.options.path = options.path
     this.options.method = options.method
@@ -33,10 +21,10 @@ export class RouteContext <Modules> {
   }
 }
 
-export function Route<Modules = any> (options: RouteOptions<Modules>) {
+export function Route<Modules = any> (options: Types.RouteOptions<Modules>) {
   Loader.loadRoute(async application => {
     const route = new RouteContext<Modules>(options)
-    const helper = new RouteHelper<Modules>(route)
+    const helper = new RouteBuilder<Modules>(route)
 
     await application.container.invoke(helper, options.load)
 
@@ -44,7 +32,7 @@ export function Route<Modules = any> (options: RouteOptions<Modules>) {
   })
 }
 
-export class RouteHelper <Modules> {
+export class RouteBuilder <Modules> {
   constructor(private route: RouteContext<Modules>) {}
 
   use (middleware: Types.RouteMiddleware) {

@@ -2,24 +2,15 @@ import * as path from 'path'
 import * as glob from 'glob'
 
 import { Loader } from './Loader'
-import { ApplicationResult } from './Application'
+import { Types } from './Types'
 import { Build } from './Build'
 
-export interface BootstrapOptions {
-  source: string
-  build: 'run' | 'docs'
-}
-
-export interface BootstrapResult {
-  applications: ApplicationResult[]
-}
-
 export class BootstrapContext {
-  result = {} as BootstrapResult
-  options = {} as BootstrapOptions
+  result = {} as Types.BootstrapResult
+  options = {} as Types.BootstrapOptions
   promises = [] as Promise<void>[]
 
-  constructor (options: BootstrapOptions) {
+  constructor (options: Types.BootstrapOptions) {
     this.options.source = path.resolve(process.cwd(), options.source)
     this.options.build = options.build
     this.result.applications = []
@@ -30,7 +21,7 @@ export class BootstrapContext {
     return this.result
   }
 
-  async addApplicationLoader (loader: (context: BootstrapContext) => Promise<ApplicationResult> | ApplicationResult) {
+  async addApplicationLoader (loader: Types.ApplicationLoader) {
     this.promises.push((async () => {
       const application = await Promise.resolve(loader(this))
       this.result.applications.push(application)
@@ -38,7 +29,7 @@ export class BootstrapContext {
   }
 }
 
-export function Bootstrap (options: BootstrapOptions) {
+export function Bootstrap (options: Types.BootstrapOptions) {
   const context = new BootstrapContext(options)
 
   Loader.bindBootstrapContext(context, async () => {
@@ -55,6 +46,7 @@ export function Bootstrap (options: BootstrapOptions) {
 
     const result = await context.getResult()
 
-    await Build(result, options.build)
+    console.log(JSON.stringify(result, null, 2))
+    // await Build(result, options.build)
   })
 }
