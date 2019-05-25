@@ -1,7 +1,9 @@
 node_modules/
 coverage/
 .nyc_output/
-mocha.opts
+tsconfig.json
+tslint.json
+mocharc.yml
 wercker.yml
 *.spec.js
 .vscode
