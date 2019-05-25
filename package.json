@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rimraf dist types && tsc",
     "clean": "rimraf dist types",
-    "lint": "tslint index.ts src/**/*.ts",
+    "lint": "tslint src/**/*.ts",
     "showcov": "open-cli ./coverage/index.html",
     "coverage": "nyc report --reporter=lcovonly --reporter=html",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
