@@ -2,13 +2,13 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
-    "experimentalDecorators": true,
     "sourceMap": true,
     "target": "es6",
     "lib": ["es7"],
+    "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
-    "outDir": "dist"
+    "declarationDir": "types"
   },
   "include": [
     "src/**/*.ts"
