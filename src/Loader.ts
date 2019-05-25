@@ -1,37 +1,76 @@
-import { BootstrapContext } from './Bootstrap'
-import { ApplicationContext } from './Application'
+import { ApplicationContext } from './ApplicationContext'
+import { RouteContext } from './RouteContext'
 import { Types } from './Types'
+import { Server } from './Server'
+
+import * as path from 'path'
 
 export namespace Loader {
-  let applicationContext: ApplicationContext<any>
-  let applicationPromise: Promise<void>
+  let loadPromise = null as Promise<void>
+  let loadCallback = null as Types.ApplicationCallback
 
-  let bootstrapContext: BootstrapContext
-  let bootstrapPromise: Promise<void>
+  let applicationPromise = null as Promise<void>
+  let applicationContext = null as ApplicationContext<any>
 
-  export async function bindApplicationContext <Modules> (context: ApplicationContext<Modules>, callback: Function) {
-    if (applicationPromise) await applicationPromise
-    applicationContext = context
-    applicationPromise = Promise.resolve(callback())
-    return applicationPromise
+  let routePromise = null as Promise<void>
+  let routeContext = null as RouteContext<any>
+
+  /**
+   * Import a file watching and set a custom callback to be executed
+   * when an application context is loaded
+   */
+  export function loadSource (source: string, callback: Types.ApplicationCallback) {
+    loadPromise = Promise.resolve(loadPromise)
+    .then(() => {
+      const file = path.resolve(process.cwd(), source)
+      delete require.cache[file]
+      loadCallback = callback
+      return import(file)
+    })
+    .then(() => Promise.resolve(applicationPromise))
+    .then(() => loadPromise = loadPromise = null)
+    .catch(error => {
+      console.log(error)
+    })
   }
 
-  export function loadRoute <Modules = any> (loader: Types.RouteLoader<Modules>) : void {
-    if (applicationContext) {
-      applicationContext.addRouteLoader(loader)
-    } else throw new Error('Loader has no bound application context')
+  export function loadApplicationContext (context: ApplicationContext<any>, load: Function) {
+    applicationPromise = Promise.resolve(applicationPromise)
+    .then(() => applicationContext = context)
+    .then(() => Promise.resolve(load()))
+    .then(() => applicationContext.getResult())
+    .then(result => {
+      if (loadCallback === null) {
+        new Server(result).start()
+      } else {
+        return Promise.resolve(loadCallback(result))
+      }
+    })
+    .then(() => applicationPromise = applicationContext = null)
+    .catch(error => {
+      console.log(error)
+    })
   }
 
-  export async function bindBootstrapContext (context: BootstrapContext, callback: Function) {
-    if (bootstrapPromise) await bootstrapPromise
-    bootstrapContext = context
-    bootstrapPromise = Promise.resolve(callback())
-    return bootstrapPromise
+  export function loadRouteContext (context: RouteContext<any>, load: Function) {
+    routePromise = Promise.resolve(routePromise)
+    .then(() => routeContext = context)
+    .then(() => Promise.resolve(load()))
+    .then(() => routeContext.getResult())
+    .then(result => {
+      applicationContext.addRoute(result)
+    })
+    .then(() => routePromise = routeContext = null)
+    .catch(error => {
+      console.log(error)
+    })
   }
 
-  export function loadApplication (loader: Types.ApplicationLoader) : void {
-    if (bootstrapContext) {
-      bootstrapContext.addApplicationLoader(loader)
-    } else throw new Error('No execution context has been created')
+  export function getApplicationContext <Modules = any > () : ApplicationContext<Modules> {
+    return applicationContext
+  }
+
+  export function getRouteContext <Modules = any > () : RouteContext<Modules> {
+    return routeContext
   }
 }

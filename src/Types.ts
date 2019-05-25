@@ -1,8 +1,8 @@
 import * as Koa from 'koa'
-import { BootstrapContext } from './Bootstrap'
-import { ApplicationBuilder, ApplicationContext } from './Application'
-import { RouteBuilder } from './Route'
-import { X_OK } from 'constants';
+// import { BootstrapContext } from './Bootstrap'
+import { ApplicationBuilder } from './ApplicationBuilder'
+import { ApplicationContext } from './ApplicationContext'
+import { RouteBuilder } from './RouteBuilder'
 
 export namespace Types {
   export interface RouteState {}
@@ -12,17 +12,9 @@ export namespace Types {
   export type RouteLoader<Modules>
     = (context: ApplicationContext<Modules>) => Promise<RouteResult> | RouteResult
 
-  export type ApplicationLoader
-    = (context: BootstrapContext) => Promise<ApplicationResult> | ApplicationResult
+  export type ApplicationCallback = (application: ApplicationResult) => void
 
-  export interface BootstrapOptions {
-    source: string
-    build: 'run' | 'docs'
-  }
-
-  export interface BootstrapResult {
-    applications: Types.ApplicationResult[]
-  }
+  export type ApplicationLoader = () => Promise<ApplicationResult> | ApplicationResult
 
   export interface ApplicationOptions<Modules> {
     cwd?: string

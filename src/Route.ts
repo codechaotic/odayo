@@ -1,41 +1,15 @@
 import { Types } from './Types'
 import { Loader } from './Loader'
-
-export class RouteContext <Modules> {
-  result = {} as Types.RouteResult
-  options = {} as Types.RouteOptions<Modules>
-  promises = [] as Promise<void>[]
-
-  constructor (options: Types.RouteOptions<Modules>) {
-    this.options.load = options.load
-    this.options.path = options.path
-    this.options.method = options.method
-    this.result.path = options.path
-    this.result.method = options.method
-    this.result.middleware = []
-  }
-
-  async getResult () {
-    await Promise.all(this.promises)
-    return this.result
-  }
-}
+import { RouteContext } from './RouteContext'
+import { RouteBuilder } from './RouteBuilder'
 
 export function Route<Modules = any> (options: Types.RouteOptions<Modules>) {
-  Loader.loadRoute(async application => {
-    const route = new RouteContext<Modules>(options)
-    const helper = new RouteBuilder<Modules>(route)
+  const routeContext = new RouteContext<Modules>(options)
+  const routeBuilder = new RouteBuilder<Modules>(routeContext)
+  const applicationContext = Loader.getApplicationContext()
 
-    await application.container.invoke(helper, options.load)
-
-    return route.getResult()
+  Loader.loadRouteContext(routeContext, async () => {
+    const loadResult = applicationContext.container.invoke(routeBuilder, routeContext.options.load)
+    routeContext.addPromise(Promise.resolve(loadResult))
   })
-}
-
-export class RouteBuilder <Modules> {
-  constructor(private route: RouteContext<Modules>) {}
-
-  use (middleware: Types.RouteMiddleware) {
-    this.route.result.middleware.push(middleware)
-  }
 }
